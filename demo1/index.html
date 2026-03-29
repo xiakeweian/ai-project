@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="ocean">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>1024</title>
+  <style>
+    :root {
+      --grid-gap: 8px;
+      --radius: 12px;
+      --tile-radius: 8px;
+    }
+
+    :root,
+    [data-theme="ocean"] {
+      --bg: #0f1419;
+      --bg-glow: #1e3a5f;
+      --panel: #1a2332;
+      --text: #e8eef5;
+      --muted: #8b9cb3;
+      --accent: #3d9eff;
+      --accent-dim: #2563a8;
+      --title-1: #ffffff;
+      --title-2: #7eb8ff;
+      --title-3: #4a9fff;
+      --overlay-bg: rgba(10, 14, 20, 0.82);
+      --btn-shadow: rgba(61, 158, 255, 0.35);
+      --cell-fill: rgba(0, 0, 0, 0.25);
+      --tile-highlight: rgba(255, 255, 255, 0.12);
+      --surface-border: rgba(255, 255, 255, 0.06);
+      --input-border: rgba(255, 255, 255, 0.1);
+    }
+
+    [data-theme="forest"] {
+      --bg: #0d1612;
+      --bg-glow: #1a3d2e;
+      --panel: #15251f;
+      --text: #e8f5ef;
+      --muted: #8fb3a8;
+      --accent: #3ecf8e;
+      --accent-dim: #1e8a5a;
+      --title-1: #e8fff0;
+      --title-2: #7ee8b8;
+      --title-3: #3ecf8e;
+      --overlay-bg: rgba(8, 16, 12, 0.88);
+      --btn-shadow: rgba(62, 207, 142, 0.35);
+      --cell-fill: rgba(0, 0, 0, 0.28);
+      --tile-highlight: rgba(255, 255, 255, 0.1);
+      --surface-border: rgba(255, 255, 255, 0.07);
+      --input-border: rgba(255, 255, 255, 0.12);
+    }
+
+    [data-theme="sunset"] {
+      --bg: #1a0f14;
+      --bg-glow: #4a2840;
+      --panel: #251820;
+      --text: #fce8f0;
+      --muted: #c9a0b8;
+      --accent: #ff7b9c;
+      --accent-dim: #c94d6e;
+      --title-1: #fff5f8;
+      --title-2: #ffb8d0;
+      --title-3: #ff7b9c;
+      --overlay-bg: rgba(24, 10, 18, 0.88);
+      --btn-shadow: rgba(255, 123, 156, 0.38);
+      --cell-fill: rgba(0, 0, 0, 0.22);
+      --tile-highlight: rgba(255, 255, 255, 0.12);
+      --surface-border: rgba(255, 255, 255, 0.07);
+      --input-border: rgba(255, 255, 255, 0.12);
+    }
+
+    [data-theme="paper"] {
+      --bg: #ebe6dc;
+      --bg-glow: #d4c9b8;
+      --panel: #ffffff;
+      --text: #2c2419;
+      --muted: #6b5d4f;
+      --accent: #c45c26;
+      --accent-dim: #8f3d12;
+      --title-1: #3d3026;
+      --title-2: #a06842;
+      --title-3: #c45c26;
+      --overlay-bg: rgba(40, 32, 24, 0.5);
+      --btn-shadow: rgba(196, 92, 38, 0.28);
+      --cell-fill: rgba(0, 0, 0, 0.06);
+      --tile-highlight: rgba(255, 255, 255, 0.65);
+      --surface-border: rgba(0, 0, 0, 0.08);
+      --input-border: rgba(0, 0, 0, 0.12);
+    }
+
+    [data-theme="midnight"] {
+      --bg: #0a0614;
+      --bg-glow: #2d1a4d;
+      --panel: #140a22;
+      --text: #ece8ff;
+      --muted: #a090c8;
+      --accent: #b388ff;
+      --accent-dim: #7c4dff;
+      --title-1: #f5f0ff;
+      --title-2: #d4b8ff;
+      --title-3: #b388ff;
+      --overlay-bg: rgba(8, 4, 18, 0.9);
+      --btn-shadow: rgba(179, 136, 255, 0.4);
+      --cell-fill: rgba(0, 0, 0, 0.3);
+      --tile-highlight: rgba(255, 255, 255, 0.1);
+      --surface-border: rgba(255, 255, 255, 0.08);
+      --input-border: rgba(255, 255, 255, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "SF Pro Display", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: radial-gradient(ellipse 120% 80% at 50% -20%, var(--bg-glow) 0%, var(--bg) 55%);
+      color: var(--text);
+      transition: background 0.35s ease, color 0.25s ease;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 6vw, 2.75rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, var(--title-1) 0%, var(--title-2) 50%, var(--title-3) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 6px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .scores {
+      display: flex;
+      gap: 10px;
+    }
+
+    .score-box {
+      background: var(--panel);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius);
+      transition: background 0.25s ease, border-color 0.25s ease;
+      padding: 8px 14px;
+      min-width: 88px;
+      text-align: center;
+    }
+
+    .score-box span {
+      display: block;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    .score-box strong {
+      font-size: 1.35rem;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent);
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    label {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    select {
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+    }
+
+    button:not(.theme-btn) {
+      font-family: inherit;
+      background: linear-gradient(180deg, var(--accent) 0%, var(--accent-dim) 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 14px var(--btn-shadow);
+      transition: box-shadow 0.25s ease, filter 0.2s ease;
+    }
+
+    button:not(.theme-btn):active {
+      transform: scale(0.98);
+    }
+
+    .theme-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .theme-bar > span {
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+
+    .theme-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    button.theme-btn {
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      border-radius: 999px;
+      border: 2px solid var(--surface-border);
+      background: var(--panel);
+      color: var(--text);
+      cursor: pointer;
+      box-shadow: none;
+      transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+    }
+
+    button.theme-btn .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+    }
+
+    button.theme-btn[aria-pressed="true"] {
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 18%, var(--panel));
+      color: var(--text);
+    }
+
+    button.theme-btn:active {
+      transform: scale(0.97);
+    }
+
+    .board-wrap {
+      background: var(--panel);
+      border-radius: var(--radius);
+      padding: var(--grid-gap);
+      border: 1px solid var(--surface-border);
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+      transition: background 0.25s ease, border-color 0.25s ease;
+    }
+
+    .board-stage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1;
+      touch-action: none;
+    }
+
+    .board {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      gap: var(--grid-gap);
+    }
+
+    .cell {
+      background: var(--cell-fill);
+      border-radius: var(--tile-radius);
+    }
+
+    .tiles-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .tile {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      border-radius: var(--tile-radius);
+      transition: transform 120ms ease-out, opacity 120ms ease;
+      box-shadow: inset 0 1px 0 var(--tile-highlight);
+    }
+
+    .hint {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 16px;
+      line-height: 1.5;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--overlay-bg);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 24px;
+      backdrop-filter: blur(6px);
+    }
+
+    .overlay.show {
+      display: flex;
+    }
+
+    .dialog {
+      background: var(--panel);
+      border: 1px solid var(--input-border);
+      border-radius: 16px;
+      transition: background 0.25s ease, border-color 0.25s ease;
+      padding: 28px 24px;
+      max-width: 320px;
+      text-align: center;
+    }
+
+    .dialog h2 {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .dialog p {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+
+    .dialog button {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <h1>1024</h1>
+      <p class="subtitle">合并方块，拼出 <strong style="color: var(--accent)">1024</strong></p>
+    </header>
+
+    <div class="theme-bar">
+      <span>主题风格</span>
+      <div class="theme-buttons" role="radiogroup" aria-label="界面主题">
+        <button type="button" class="theme-btn" data-theme="ocean" aria-pressed="true">
+          <span class="swatch" style="background: linear-gradient(135deg, #3d9eff, #2563a8)"></span>
+          深海
+        </button>
+        <button type="button" class="theme-btn" data-theme="forest" aria-pressed="false">
+          <span class="swatch" style="background: linear-gradient(135deg, #5cbf8f, #1e8a5a)"></span>
+          森野
+        </button>
+        <button type="button" class="theme-btn" data-theme="sunset" aria-pressed="false">
+          <span class="swatch" style="background: linear-gradient(135deg, #ff9ec4, #c94d6e)"></span>
+          晚霞
+        </button>
+        <button type="button" class="theme-btn" data-theme="paper" aria-pressed="false">
+          <span class="swatch" style="background: linear-gradient(135deg, #f5ebe0, #c45c26)"></span>
+          素纸
+        </button>
+        <button type="button" class="theme-btn" data-theme="midnight" aria-pressed="false">
+          <span class="swatch" style="background: linear-gradient(135deg, #d4b8ff, #7c4dff)"></span>
+          午夜
+        </button>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="scores">
+        <div class="score-box">
+          <span>得分</span>
+          <strong id="score">0</strong>
+        </div>
+        <div class="score-box">
+          <span>最高</span>
+          <strong id="best">0</strong>
+        </div>
+      </div>
+      <div class="controls">
+        <label for="sizeSelect">网格</label>
+        <select id="sizeSelect" aria-label="网格大小">
+          <option value="4">4 × 4</option>
+          <option value="5">5 × 5</option>
+        </select>
+        <button type="button" id="newGame">新游戏</button>
+      </div>
+    </div>
+
+    <div class="board-wrap">
+      <div class="board-stage" id="boardStage">
+        <div class="board" id="board" aria-hidden="true"></div>
+        <div class="tiles-layer" id="tilesLayer"></div>
+      </div>
+    </div>
+
+    <p class="hint">使用方向键 ↑↓←→ 或在棋盘上滑动；每次移动后在空格随机出现 <strong>1</strong>、<strong>2</strong> 或 <strong>4</strong>。</p>
+  </div>
+
+  <div class="overlay" id="overlayWin" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+    <div class="dialog">
+      <h2 id="winTitle">恭喜达成 1024！</h2>
+      <p>你已成功合并出 1024。可以继续挑战更高分，或开始新局。</p>
+      <button type="button" id="continueBtn">继续游戏</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlayLose" role="dialog" aria-modal="true" aria-labelledby="loseTitle">
+    <div class="dialog">
+      <h2 id="loseTitle">游戏结束</h2>
+      <p>没有可移动的步数了。再试一局？</p>
+      <button type="button" id="retryBtn">再来一局</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const WIN = 1024;
+      const BEST_KEY = "1024-best";
+      const THEME_KEY = "1024-theme";
+      const THEMES = ["ocean", "forest", "sunset", "paper", "midnight"];
+
+      const THEME_TILES = {
+        ocean: {
+          0: { bg: "transparent", fg: "#fff" },
+          1: { bg: "#2d3a4d", fg: "#c5d4e8" },
+          2: { bg: "#3d4f6a", fg: "#dce8ff" },
+          4: { bg: "#4a6fa5", fg: "#fff" },
+          8: { bg: "#5c8fd4", fg: "#fff" },
+          16: { bg: "#3d9eff", fg: "#0a1628" },
+          32: { bg: "#2b8ae6", fg: "#fff" },
+          64: { bg: "#1e6bb8", fg: "#fff" },
+          128: { bg: "#c9a227", fg: "#1a1400" },
+          256: { bg: "#e6b82e", fg: "#2a2000" },
+          512: { bg: "#f0c940", fg: "#2a2000" },
+          1024: { bg: "linear-gradient(145deg, #ffd76a 0%, #ff9f1a 100%)", fg: "#2a1800" },
+          2048: { bg: "linear-gradient(145deg, #ff8a65 0%, #e64a19 100%)", fg: "#fff" },
+          mega: { bg: "#7c4dff", fg: "#fff" },
+        },
+        forest: {
+          0: { bg: "transparent", fg: "#fff" },
+          1: { bg: "#1e3d32", fg: "#b8e8d0" },
+          2: { bg: "#2d5a47", fg: "#d0f5e0" },
+          4: { bg: "#3d7a5f", fg: "#fff" },
+          8: { bg: "#4a9d78", fg: "#fff" },
+          16: { bg: "#5cbf8f", fg: "#0a2818" },
+          32: { bg: "#2d8a5e", fg: "#fff" },
+          64: { bg: "#1e6b47", fg: "#fff" },
+          128: { bg: "#c9a227", fg: "#1a1400" },
+          256: { bg: "#e6c82e", fg: "#2a2000" },
+          512: { bg: "#f0d940", fg: "#2a2000" },
+          1024: { bg: "linear-gradient(145deg, #d4f5a0 0%, #3ecf8e 100%)", fg: "#0a2818" },
+          2048: { bg: "linear-gradient(145deg, #ff9f7a 0%, #e64a19 100%)", fg: "#fff" },
+          mega: { bg: "#00e676", fg: "#003d1f" },
+        },
+        sunset: {
+          0: { bg: "transparent", fg: "#fff" },
+          1: { bg: "#4a3048", fg: "#f8d0e0" },
+          2: { bg: "#6b3d58", fg: "#fce8f0" },
+          4: { bg: "#8f4d6e", fg: "#fff" },
+          8: { bg: "#b85d7a", fg: "#fff" },
+          16: { bg: "#ff7b9c", fg: "#2a0814" },
+          32: { bg: "#e85d8a", fg: "#fff" },
+          64: { bg: "#c94d6e", fg: "#fff" },
+          128: { bg: "#f0a020", fg: "#2a1800" },
+          256: { bg: "#ffc040", fg: "#2a2000" },
+          512: { bg: "#ffd060", fg: "#3a2500" },
+          1024: { bg: "linear-gradient(145deg, #ffd76a 0%, #ff7b9c 100%)", fg: "#2a0810" },
+          2048: { bg: "linear-gradient(145deg, #ff8a65 0%, #c94d6e 100%)", fg: "#fff" },
+          mega: { bg: "#e040fb", fg: "#fff" },
+        },
+        paper: {
+          0: { bg: "transparent", fg: "#2c2419" },
+          1: { bg: "#e8e4de", fg: "#5c5347" },
+          2: { bg: "#ddd8ce", fg: "#4a4338" },
+          4: { bg: "#d0c8b8", fg: "#3d3628" },
+          8: { bg: "#c4b8a4", fg: "#2c2419" },
+          16: { bg: "#b5a892", fg: "#2c2419" },
+          32: { bg: "#a89878", fg: "#2c2419" },
+          64: { bg: "#8f7a5c", fg: "#fff" },
+          128: { bg: "#c45c26", fg: "#fff" },
+          256: { bg: "#d4743a", fg: "#fff" },
+          512: { bg: "#e08850", fg: "#fff" },
+          1024: { bg: "linear-gradient(145deg, #f5d0a0 0%, #c45c26 100%)", fg: "#2c1808" },
+          2048: { bg: "linear-gradient(145deg, #ff9a6a 0%, #8f3d12 100%)", fg: "#fff" },
+          mega: { bg: "#5d4037", fg: "#fff" },
+        },
+        midnight: {
+          0: { bg: "transparent", fg: "#fff" },
+          1: { bg: "#2a1f45", fg: "#d4c8f0" },
+          2: { bg: "#3d2d5c", fg: "#e8e0ff" },
+          4: { bg: "#5240a0", fg: "#fff" },
+          8: { bg: "#6b52c4", fg: "#fff" },
+          16: { bg: "#7c4dff", fg: "#fff" },
+          32: { bg: "#5c3dd4", fg: "#fff" },
+          64: { bg: "#4a2fb8", fg: "#fff" },
+          128: { bg: "#e040fb", fg: "#fff" },
+          256: { bg: "#d500f9", fg: "#fff" },
+          512: { bg: "#aa00ff", fg: "#fff" },
+          1024: { bg: "linear-gradient(145deg, #ffd76a 0%, #b388ff 100%)", fg: "#1a0a28" },
+          2048: { bg: "linear-gradient(145deg, #ff8a65 0%, #7c4dff 100%)", fg: "#fff" },
+          mega: { bg: "#00e5ff", fg: "#003844" },
+        },
+      };
+
+      function colorFor(n) {
+        const t = document.documentElement.dataset.theme || "ocean";
+        const palette = THEME_TILES[t] || THEME_TILES.ocean;
+        if (n > 2048) {
+          const m = palette.mega || { bg: "#7c4dff", fg: "#fff" };
+          return { bg: m.bg, fg: m.fg };
+        }
+        return palette[n] || palette[2048];
+      }
+
+      function emptyGrid(size) {
+        return Array.from({ length: size }, () => Array(size).fill(0));
+      }
+
+      function clone(g) {
+        return g.map((row) => row.slice());
+      }
+
+      function transpose(g) {
+        return g[0].map((_, c) => g.map((row) => row[c]));
+      }
+
+      function reverseRows(g) {
+        return g.map((row) => row.slice().reverse());
+      }
+
+      /** 单行向左合并：去零 → 相邻相同合并一次 → 再补零 */
+      function mergeLineLeft(line) {
+        const filtered = line.filter((x) => x !== 0);
+        const out = [];
+        let i = 0;
+        let scoreAdd = 0;
+        while (i < filtered.length) {
+          if (i < filtered.length - 1 && filtered[i] === filtered[i + 1]) {
+            const v = filtered[i] * 2;
+            out.push(v);
+            scoreAdd += v;
+            i += 2;
+          } else {
+            out.push(filtered[i]);
+            i += 1;
+          }
+        }
+        while (out.length < line.length) out.push(0);
+        return { line: out, scoreAdd };
+      }
+
+      function moveLeft(grid) {
+        const n = grid.length;
+        let moved = false;
+        let scoreAdd = 0;
+        const next = clone(grid);
+        for (let r = 0; r < n; r++) {
+          const old = next[r].join(",");
+          const { line, scoreAdd: add } = mergeLineLeft(next[r]);
+          next[r] = line;
+          scoreAdd += add;
+          if (old !== line.join(",")) moved = true;
+        }
+        return { grid: next, moved, scoreAdd };
+      }
+
+      function move(grid, dir) {
+        let g = grid;
+        if (dir === "up") g = transpose(g);
+        else if (dir === "right") g = reverseRows(g);
+        else if (dir === "down") {
+          g = transpose(g);
+          g = reverseRows(g);
+        }
+        const result = moveLeft(g);
+        let out = result.grid;
+        if (dir === "up") out = transpose(out);
+        else if (dir === "right") out = reverseRows(out);
+        else if (dir === "down") {
+          out = reverseRows(out);
+          out = transpose(out);
+        }
+        return { grid: out, moved: result.moved, scoreAdd: result.scoreAdd };
+      }
+
+      function hasMove(grid) {
+        const n = grid.length;
+        for (let r = 0; r < n; r++) {
+          for (let c = 0; c < n; c++) {
+            if (grid[r][c] === 0) return true;
+            const v = grid[r][c];
+            if (c < n - 1 && grid[r][c + 1] === v) return true;
+            if (r < n - 1 && grid[r + 1][c] === v) return true;
+          }
+        }
+        return false;
+      }
+
+      function hasWinTile(grid) {
+        for (const row of grid) {
+          if (row.includes(WIN)) return true;
+        }
+        return false;
+      }
+
+      function randomNewValue() {
+        const r = Math.random();
+        if (r < 0.55) return 2;
+        if (r < 0.8) return 1;
+        return 4;
+      }
+
+      function addRandomTile(grid) {
+        const n = grid.length;
+        const empties = [];
+        for (let r = 0; r < n; r++) {
+          for (let c = 0; c < n; c++) {
+            if (grid[r][c] === 0) empties.push([r, c]);
+          }
+        }
+        if (empties.length === 0) return false;
+        const [r, c] = empties[Math.trunc(Math.random() * empties.length)];
+        grid[r][c] = randomNewValue();
+        return true;
+      }
+
+      const boardEl = document.getElementById("board");
+      const tilesLayer = document.getElementById("tilesLayer");
+      const boardStage = document.getElementById("boardStage");
+      const scoreEl = document.getElementById("score");
+      const bestEl = document.getElementById("best");
+      const sizeSelect = document.getElementById("sizeSelect");
+      const overlayWin = document.getElementById("overlayWin");
+      const overlayLose = document.getElementById("overlayLose");
+
+      let size = 4;
+      let grid = emptyGrid(4);
+      let score = 0;
+      let best = Number(localStorage.getItem(BEST_KEY)) || 0;
+      let wonShown = false;
+      let gameOver = false;
+
+      bestEl.textContent = String(best);
+
+      function setBest(s) {
+        if (s > best) {
+          best = s;
+          localStorage.setItem(BEST_KEY, String(best));
+          bestEl.textContent = String(best);
+        }
+      }
+
+      function renderBoardStructure() {
+        boardEl.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+        boardEl.innerHTML = "";
+        for (let i = 0; i < size * size; i++) {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          boardEl.appendChild(cell);
+        }
+        tilesLayer.innerHTML = "";
+      }
+
+      function renderTiles() {
+        tilesLayer.innerHTML = "";
+        const gap = 8;
+        const w = boardStage.getBoundingClientRect().width;
+        const cell = (w - gap * (size - 1)) / size;
+
+        for (let r = 0; r < size; r++) {
+          for (let c = 0; c < size; c++) {
+            const v = grid[r][c];
+            if (v === 0) continue;
+            const el = document.createElement("div");
+            el.className = "tile";
+            el.textContent = String(v);
+            const colors = colorFor(v);
+            if (colors.bg.startsWith("linear")) {
+              el.style.background = colors.bg;
+            } else {
+              el.style.backgroundColor = colors.bg;
+            }
+            el.style.color = colors.fg;
+            const fontSize = Math.max(12, Math.min(28, cell * 0.42));
+            el.style.fontSize = fontSize + "px";
+            el.style.width = cell + "px";
+            el.style.height = cell + "px";
+            el.style.left = c * (cell + gap) + "px";
+            el.style.top = r * (cell + gap) + "px";
+            tilesLayer.appendChild(el);
+          }
+        }
+      }
+
+      function applyTheme(themeId) {
+        const id = THEMES.includes(themeId) ? themeId : "ocean";
+        document.documentElement.dataset.theme = id;
+        localStorage.setItem(THEME_KEY, id);
+        document.querySelectorAll(".theme-btn").forEach((btn) => {
+          btn.setAttribute("aria-pressed", btn.dataset.theme === id ? "true" : "false");
+        });
+        renderTiles();
+      }
+
+      function initGame() {
+        size = Number.parseInt(sizeSelect.value, 10) || 4;
+        grid = emptyGrid(size);
+        score = 0;
+        wonShown = false;
+        gameOver = false;
+        scoreEl.textContent = "0";
+        overlayWin.classList.remove("show");
+        overlayLose.classList.remove("show");
+        addRandomTile(grid);
+        addRandomTile(grid);
+        renderBoardStructure();
+        window.requestAnimationFrame(() => {
+          renderTiles();
+        });
+      }
+
+      function tryMove(dir) {
+        if (gameOver) return;
+        const { grid: next, moved, scoreAdd } = move(grid, dir);
+        if (!moved) return;
+        grid = next;
+        score += scoreAdd;
+        scoreEl.textContent = String(score);
+        setBest(score);
+        addRandomTile(grid);
+        renderTiles();
+
+        if (!wonShown && hasWinTile(grid)) {
+          wonShown = true;
+          overlayWin.classList.add("show");
+        }
+
+        if (!hasMove(grid)) {
+          gameOver = true;
+          overlayLose.classList.add("show");
+        }
+      }
+
+      document.getElementById("newGame").addEventListener("click", initGame);
+      sizeSelect.addEventListener("change", initGame);
+      document.getElementById("continueBtn").addEventListener("click", () => {
+        overlayWin.classList.remove("show");
+      });
+      document.getElementById("retryBtn").addEventListener("click", () => {
+        overlayLose.classList.remove("show");
+        initGame();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        const key = e.key;
+        if (key === "ArrowUp") {
+          e.preventDefault();
+          tryMove("up");
+        } else if (key === "ArrowDown") {
+          e.preventDefault();
+          tryMove("down");
+        } else if (key === "ArrowLeft") {
+          e.preventDefault();
+          tryMove("left");
+        } else if (key === "ArrowRight") {
+          e.preventDefault();
+          tryMove("right");
+        }
+      });
+
+      let touchStart = null;
+      const swipeMin = 24;
+
+      boardStage.addEventListener(
+        "touchstart",
+        (e) => {
+          if (e.touches.length !== 1) return;
+          const t = e.touches[0];
+          touchStart = { x: t.clientX, y: t.clientY };
+        },
+        { passive: true }
+      );
+
+      boardStage.addEventListener(
+        "touchend",
+        (e) => {
+          if (!touchStart || e.changedTouches.length !== 1) return;
+          const t = e.changedTouches[0];
+          const dx = t.clientX - touchStart.x;
+          const dy = t.clientY - touchStart.y;
+          touchStart = null;
+          if (Math.abs(dx) < swipeMin && Math.abs(dy) < swipeMin) return;
+          if (Math.abs(dx) > Math.abs(dy)) {
+            tryMove(dx > 0 ? "right" : "left");
+          } else {
+            tryMove(dy > 0 ? "down" : "up");
+          }
+        },
+        { passive: true }
+      );
+
+      window.addEventListener("resize", () => {
+        renderTiles();
+      });
+
+      document.querySelectorAll(".theme-btn").forEach((btn) => {
+        btn.addEventListener("click", () => applyTheme(btn.dataset.theme));
+      });
+
+      let storedTheme = localStorage.getItem(THEME_KEY);
+      if (!THEMES.includes(storedTheme)) storedTheme = "ocean";
+      applyTheme(storedTheme);
+
+      initGame();
+    })();
+  </script>
+</body>
+</html>
