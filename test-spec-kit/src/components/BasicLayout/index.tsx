@@ -1,5 +1,11 @@
+/*
+ * @Description: 
+ * @Author: wuyanxia
+ * @Date: 2026-04-10 22:49:13
+ * @LastEditors: wuyanxia
+ * @LastEditTime: 2026-04-11 00:28:43
+ */
 import React from 'react';
-import { Button } from 'antd';
 import { Outlet } from 'react-router-dom';
 import AntDesignTheme from '../AntDesignTheme';
 import useAntDesignConfig from '@/hooks/useAntdConfig';
@@ -24,8 +30,7 @@ const BasicLayout: React.FC = () => {
             <QianKunOutlet />
             :
             <div style={{ width: 500, height: 200, position: 'fixed', top: 0, left: 0, bottom: 0, right: 0, margin: 'auto' }}>
-              请您跳转到
-              <Button type="link" href="https://ccs.costrip.cn" style={{ fontSize: 30 }}>光宇出行后台管理系统</Button>
+              <h1>这是一个独立运行的页面</h1>
             </div>
         }
       </>

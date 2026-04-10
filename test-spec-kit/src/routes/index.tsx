@@ -21,24 +21,6 @@ export const routers: RouteObjectExtend[] = [
         },
         element: <Home />,
       },
-      // {
-      //   index: false,
-      //   path: '/basic',
-      //   name: '工具中心',
-      //   key: '/basic',
-      //   auth: '1',
-      //   // element: <BasicLayout/>,
-      //   children: [
-      //     {
-      //       index: false,
-      //       path: '/basic/index',
-      //       name: '维修工单',
-      //       element: <SignIn/>,
-      //       key: '/basic/index',
-      //       auth: '1',
-      //     },
-      //   ]
-      // }
     ],
   },
   {
