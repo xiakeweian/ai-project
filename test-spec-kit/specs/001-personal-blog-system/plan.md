@@ -3,7 +3,7 @@
 **Branch**: `001-personal-blog-system` | **Date**: 2026-04-11 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/001-personal-blog-system/spec.md`
 
-**Note**: This plan documents the target implementation architecture for the blog system. It intentionally records constitution conflicts instead of hiding them.
+**Note**: This plan documents the target implementation architecture for the blog system and follows the revised constitution baseline for a standalone blog app coexisting with the existing microfrontend.
 
 ## Summary
 
@@ -20,30 +20,30 @@
 **Target Platform**: Linux 容器化部署，Nginx 反向代理 + Node.js 应用运行时；桌面端与移动端现代浏览器  
 **Project Type**: 仓库内新增的全栈 Web 应用，与现有微前端代码并存  
 **Performance Goals**: 公开首页与文章页命中再生成缓存时 TTFB < 1s；发布或更新文章后，首页和文章详情页在 5 分钟内完成再生成并对外可见；后台分页列表操作的感知响应时间 < 300ms  
-**Constraints**: 必须支持角色权限、SEO 元信息、响应式布局、Markdown 实时预览、本地上传优先且可扩展到云存储、发布后稳定 `slug`、评论默认公开后可管理；当前宪章的 CRA 微前端与静态托管基线无法直接满足上述能力  
+**Constraints**: 必须支持角色权限、SEO 元信息、响应式布局、Markdown 实时预览、本地上传优先且可扩展到云存储、发布后稳定 `slug`、评论默认公开后可管理；实现必须遵循已修订的“独立博客全栈应用 + 现有微前端并存”基线  
 **Scale/Scope**: 单站点个人博客，数百到数千篇文章，低写入并发，三种角色，公开读流量高于后台写流量
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- **Gate 1 - 技术栈一致性**: `FAIL（需批准例外）`
-  原宪章要求基于 CRA + CRACO 的 React 微前端子应用；本方案引入独立的支持 ISR 的全栈博客应用，已超出原前端子应用边界。
-- **Gate 2 - 微前端兼容性优先**: `PASS（对现有应用） / NOT APPLICABLE（对新增博客应用）`
-  现有 `src/` 微前端代码在本计划中保持不动；博客系统以新增应用承载，不直接破坏现有 qiankun 子应用契约。
-- **Gate 3 - 函数式 React 架构**: `PASS`
-  新应用仍使用 React 函数组件、Hooks、模块化目录以及清晰的 `components/` / `features/` / `lib/` 分层。
-- **Gate 4 - 统一 UI 与状态模型**: `PASS WITH ADAPTATION`
-  管理后台继续沿用 React 18 + Ant Design 体系；管理端复杂共享状态可保留 Redux/Rematch 思路，公共页面尽量减少全局客户端状态。
-- **Gate 5 - 工程质量与交付纪律**: `FAIL（需批准例外）`
-  原宪章基线是静态 Nginx 托管；本方案需要 Node.js 应用运行时、数据库与可写上传目录，CI/CD 也需要同步升级。
+- **Gate 1 - 架构与场景匹配**: `PASS`
+  宪章已明确允许仓库内新增面向 ISR、SEO、认证、上传与内容管理场景的独立全栈博客应用。
+- **Gate 2 - 兼容性与隔离并重**: `PASS`
+  现有 `src/` 微前端代码保持不动；博客系统以 `apps/blog-web` 作为独立边界实施，不破坏 qiankun 子应用契约。
+- **Gate 3 - 函数式 React 与清晰分层**: `PASS`
+  计划中的博客应用仍使用 React 函数组件、Hooks，并按 `app/`、`components/`、`features/`、`lib/` 分层。
+- **Gate 4 - 统一体验与按应用选型**: `PASS`
+  管理后台继续沿用 React + Ant Design 体系，公开站点使用支持 SSR/ISR 的服务端/客户端混合渲染模式，符合修订后的宪章。
+- **Gate 5 - 工程质量与可交付运行时**: `PASS`
+  宪章已允许博客全栈应用使用 Node.js 运行时、数据库、可写上传目录与应用专属 Node 版本。
 
-**Gate Result**: `CONDITIONAL`
-本计划继续推进的前提是：团队接受“为博客系统新增独立全栈应用”的架构例外，或在实施前修订宪章。若不接受该例外，则必须缩减需求，放弃 ISR、服务端 SEO 页面和动态认证回调能力。
+**Gate Result**: `PASS`
+当前计划与已修订宪章一致，可以继续进入任务拆解与实施阶段。
 
 **Post-Design Re-Check**:
-- Phase 1 设计后未新增新的宪章冲突项。
-- 已确认的例外仍为两项：`新增支持 ISR 的全栈应用`、`引入 Node 运行时 + 数据库 + 上传存储`。
+- Phase 1 设计后未发现新的宪章冲突。
+- 计划中的目录结构、运行时与部署模式均已被修订后的宪章覆盖。
 
 ## Project Structure
 
@@ -119,8 +119,4 @@ src/
 
 ## Complexity Tracking
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| 在仓库内新增独立全栈博客应用 | 需要支持 ISR、SEO 友好的公开详情页、认证回调、图片上传与内容 API | 继续扩展现有 CRA 微前端会导致 SSR/ISR、SEO 页面输出和上传能力都需要绕路实现，复杂度更高且效果更差 |
-| 引入数据库与 ORM | 用户角色、文章、标签多对多、分类单选、评论管理都需要可靠关系模型与约束 | 使用本地 JSON/文件难以保证唯一性、权限控制、迁移与查询能力 |
-| 引入 Node 运行时与可写上传目录 | 需要路由处理、再生成触发、认证流程、本地上传与未来云存储扩展 | 纯静态 Nginx 托管无法承载动态认证、上传写入和页面增量再生成 |
+当前计划在已修订宪章下无未获批准的复杂度违例。
