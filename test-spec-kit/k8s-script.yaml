@@ -1,0 +1,68 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: test-spec-kit
+  namespace: undefined
+spec:
+  rules:
+    - host: undefined
+      http:
+        paths:
+        - path: /
+          pathType: ImplementationSpecific
+          backend:
+            service: test-spec-kit
+            port:
+              number: 8080
+  tls:
+    - hosts:
+        - undefined
+      secretName: costripcn
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-spec-kit
+  namespace: undefined
+  labels:
+    app: test-spec-kit
+spec:
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: test-spec-kit
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-spec-kit
+  namespace: undefined
+spec:
+  selector:
+    matchLabels:
+      app: test-spec-kit
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: test-spec-kit
+    spec:
+      nodeSelector:
+       nodetype: power
+      containers:
+        - name: test-spec-kit
+          image: repo.gydev.cn:8083/costrip/test-spec-kit:image-version
+          env:
+            - name: NODE
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          ports:
+            - containerPort: 8080

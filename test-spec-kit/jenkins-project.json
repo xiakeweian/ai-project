@@ -1,0 +1,44 @@
+{
+    "RuntimeVariable": {
+      "PROJECT_VERSION": "http://k8sproject.oa.gyyx.cn/K8s/version/addversion?domainname=${JOB_NAME}&desc=${JOB_NAME}&user=${REAL_USER_NAME}&branchname=${branch_name}"
+
+    },
+    "初始化": {
+      "检查node环境": {
+        "Type": "COMMAND_STDOUT",
+        "Success-IndexOf": "v16.17.1",
+        "Script": {
+          "输出Java版本": "node -v"
+        }
+      },
+      "检查SonarScanner环境": {
+        "Type": "COMMAND_STDOUT",
+        "Success-IndexOf": "SonarScanner 4.4.0.2170",
+        "Script": {
+          "输出SonarScanner版本": "sonar-scanner -v"
+        }
+      },
+      "绑定构建参数": {
+        "Type": "BUILD_PARAMETER_DROP_DOWN_MENU",
+        "StepsName": "部署",
+        "ParamName": "deploy-choice"
+      }
+    },
+    "编译构建": {
+      "执行npm构建": {
+        "Type": "COMMAND_STATUS",
+        "Script": {
+          "Maven构建": "cd ${PROJECT_PATH};npm i -g pnpm@8.15.6 --force --registry=https://registry.npmmirror.com;pnpm install;export CI=false;pnpm run build;"
+        }
+      }
+    },
+    "部署": {
+      "部署测试服务器": {
+        "Type": "COMMAND_STATUS",
+        "Script": {
+          "拷贝文件": "cd ${PROJECT_PATH};docker build -t repo.gydev.cn:8082/costrip/${JOB_NAME}:${PROJECT_VERSION} .;docker push repo.gydev.cn:8082/costrip/${JOB_NAME}:${PROJECT_VERSION};",
+          "更新k8s里的镜像": "cd ${PROJECT_PATH};sed -i 's/image-version/${PROJECT_VERSION}/g' k8s-script.yaml;kubectl apply -f k8s-script.yaml"
+        }
+      }
+    }
+  }

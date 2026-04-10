@@ -1,0 +1,4 @@
+@Library('shared-library') _
+
+def buildTemplate = libraryResource 'cn/gyyx/jenkins/libraries/buildTemplateNode16.yaml'
+k8sCluster(podTemplate:buildTemplate,gitParameterDefaultValue:'develop_merge_build')
