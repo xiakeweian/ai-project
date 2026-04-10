@@ -1,0 +1,791 @@
+openapi: 3.1.0
+info:
+  title: Personal Blog System API
+  version: 0.1.0
+  description: >
+    Planned public and admin API contract for the personal blog system.
+    GitHub OAuth browser redirects are handled by the auth framework; this contract
+    focuses on application-facing JSON endpoints.
+servers:
+  - url: http://localhost:3000
+tags:
+  - name: Auth
+  - name: Public
+  - name: Admin
+  - name: Uploads
+paths:
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a reader account with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUserResponse'
+        '409':
+          description: Email already exists
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login using email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Logged in successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUserResponse'
+        '401':
+          description: Invalid credentials
+  /api/auth/link/github:
+    post:
+      tags: [Auth]
+      summary: Link the currently logged-in account with a GitHub identity
+      responses:
+        '200':
+          description: GitHub identity linked
+        '401':
+          description: Not authenticated
+        '409':
+          description: GitHub identity already linked elsewhere
+  /api/public/articles:
+    get:
+      tags: [Public]
+      summary: List published articles for homepage or search results
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+        - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
+          name: tag
+          schema:
+            type: string
+        - in: query
+          name: category
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Published article list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedArticleList'
+  /api/public/articles/{slug}:
+    get:
+      tags: [Public]
+      summary: Get a published article by slug
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Published article detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleDetail'
+        '404':
+          description: Article not found or not published
+  /api/public/articles/{slug}/comments:
+    post:
+      tags: [Public]
+      summary: Create a comment on a published article
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCommentRequest'
+      responses:
+        '201':
+          description: Comment created and immediately visible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '401':
+          description: Authentication required
+        '404':
+          description: Article not found or not published
+  /api/admin/dashboard:
+    get:
+      tags: [Admin]
+      summary: Get dashboard metrics
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Dashboard metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardMetrics'
+        '403':
+          description: Insufficient permissions
+  /api/admin/articles:
+    get:
+      tags: [Admin]
+      summary: List articles for admin management
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Admin article list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminArticleList'
+    post:
+      tags: [Admin]
+      summary: Create an article
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertArticleRequest'
+      responses:
+        '201':
+          description: Article created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminArticle'
+        '403':
+          description: Only authors and admins can create
+  /api/admin/articles/{articleId}:
+    get:
+      tags: [Admin]
+      summary: Get article for editing
+      security:
+        - sessionAuth: []
+      parameters:
+        - in: path
+          name: articleId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Article detail for admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminArticle'
+        '403':
+          description: Access denied
+        '404':
+          description: Article not found
+    patch:
+      tags: [Admin]
+      summary: Update an article
+      security:
+        - sessionAuth: []
+      parameters:
+        - in: path
+          name: articleId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertArticleRequest'
+      responses:
+        '200':
+          description: Article updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminArticle'
+        '403':
+          description: Access denied
+    delete:
+      tags: [Admin]
+      summary: Delete an article
+      security:
+        - sessionAuth: []
+      parameters:
+        - in: path
+          name: articleId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Article deleted
+        '403':
+          description: Access denied
+  /api/admin/articles/{articleId}/status:
+    patch:
+      tags: [Admin]
+      summary: Change article status
+      security:
+        - sessionAuth: []
+      parameters:
+        - in: path
+          name: articleId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [draft, published, archived]
+      responses:
+        '200':
+          description: Status changed
+  /api/admin/categories:
+    get:
+      tags: [Admin]
+      summary: List categories
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Category list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+    post:
+      tags: [Admin]
+      summary: Create category
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertCategoryRequest'
+      responses:
+        '201':
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+  /api/admin/categories/{categoryId}:
+    patch:
+      tags: [Admin]
+      summary: Update category
+      security:
+        - sessionAuth: []
+      parameters:
+        - in: path
+          name: categoryId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertCategoryRequest'
+      responses:
+        '200':
+          description: Category updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+    delete:
+      tags: [Admin]
+      summary: Delete category after article migration
+      security:
+        - sessionAuth: []
+      parameters:
+        - in: path
+          name: categoryId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [replacementCategoryId]
+              properties:
+                replacementCategoryId:
+                  type: string
+                  format: uuid
+      responses:
+        '204':
+          description: Category deleted and articles migrated
+        '409':
+          description: Replacement category missing or invalid
+  /api/admin/tags:
+    get:
+      tags: [Admin]
+      summary: List tags
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Tag list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+    post:
+      tags: [Admin]
+      summary: Create tag
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertTagRequest'
+      responses:
+        '201':
+          description: Tag created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+  /api/admin/tags/{tagId}:
+    patch:
+      tags: [Admin]
+      summary: Update tag
+      security:
+        - sessionAuth: []
+      parameters:
+        - in: path
+          name: tagId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertTagRequest'
+      responses:
+        '200':
+          description: Tag updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+    delete:
+      tags: [Admin]
+      summary: Delete an unused tag
+      security:
+        - sessionAuth: []
+      parameters:
+        - in: path
+          name: tagId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Tag deleted
+        '409':
+          description: Tag still in use
+  /api/admin/comments/{commentId}/visibility:
+    patch:
+      tags: [Admin]
+      summary: Hide or restore a comment
+      security:
+        - sessionAuth: []
+      parameters:
+        - in: path
+          name: commentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [visible, hidden]
+      responses:
+        '200':
+          description: Comment status updated
+  /api/admin/comments/{commentId}:
+    delete:
+      tags: [Admin]
+      summary: Delete a comment
+      security:
+        - sessionAuth: []
+      parameters:
+        - in: path
+          name: commentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Comment deleted
+  /api/admin/uploads/images:
+    post:
+      tags: [Uploads]
+      summary: Upload an image for article content or cover
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Upload completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaAsset'
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: session
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [email, password, displayName]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        displayName:
+          type: string
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    AuthUserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+        role:
+          type: string
+          enum: [admin, author, reader]
+    ArticleListItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        slug:
+          type: string
+        excerpt:
+          type: string
+        coverImageUrl:
+          type: string
+          nullable: true
+        publishedAt:
+          type: string
+          format: date-time
+        authorName:
+          type: string
+        category:
+          $ref: '#/components/schemas/Category'
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+    PaginatedArticleList:
+      type: object
+      properties:
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleListItem'
+    ArticleDetail:
+      allOf:
+        - $ref: '#/components/schemas/ArticleListItem'
+        - type: object
+          properties:
+            markdownContent:
+              type: string
+            seo:
+              type: object
+              properties:
+                title:
+                  type: string
+                  nullable: true
+                description:
+                  type: string
+                  nullable: true
+                ogImage:
+                  type: string
+                  nullable: true
+            readCount:
+              type: integer
+            comments:
+              type: array
+              items:
+                $ref: '#/components/schemas/Comment'
+    UpsertArticleRequest:
+      type: object
+      required: [title, markdownContent, categoryId, status]
+      properties:
+        title:
+          type: string
+        slug:
+          type: string
+        excerpt:
+          type: string
+          nullable: true
+        markdownContent:
+          type: string
+        coverImageId:
+          type: string
+          format: uuid
+          nullable: true
+        categoryId:
+          type: string
+          format: uuid
+        tagIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        status:
+          type: string
+          enum: [draft, published, archived]
+        seoTitle:
+          type: string
+          nullable: true
+        seoDescription:
+          type: string
+          nullable: true
+        seoOgImageId:
+          type: string
+          format: uuid
+          nullable: true
+    AdminArticle:
+      allOf:
+        - $ref: '#/components/schemas/ArticleDetail'
+        - type: object
+          properties:
+            status:
+              type: string
+              enum: [draft, published, archived]
+            updatedAt:
+              type: string
+              format: date-time
+    PaginatedAdminArticleList:
+      type: object
+      properties:
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminArticle'
+    UpsertCategoryRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+          nullable: true
+        sortOrder:
+          type: integer
+    UpsertTagRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+          nullable: true
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+          nullable: true
+    Tag:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+          nullable: true
+    CreateCommentRequest:
+      type: object
+      required: [body]
+      properties:
+        body:
+          type: string
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        body:
+          type: string
+        authorName:
+          type: string
+        status:
+          type: string
+          enum: [visible, hidden, deleted]
+        createdAt:
+          type: string
+          format: date-time
+    DashboardMetrics:
+      type: object
+      properties:
+        articleCount:
+          type: integer
+        publishedCount:
+          type: integer
+        draftCount:
+          type: integer
+        archivedCount:
+          type: integer
+        totalReadCount:
+          type: integer
+        visibleCommentCount:
+          type: integer
+    MediaAsset:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        publicUrl:
+          type: string
+        mimeType:
+          type: string
+        sizeBytes:
+          type: integer
+        storageProvider:
+          type: string
+          enum: [local, cloud]
